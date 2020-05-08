@@ -1,31 +1,34 @@
-- [API en Python](#orga9dffe8)
-  - [Documentation :](#org7a7f002)
-  - [Installation :](#org5c26704)
-  - [Bac à sable](#orgd99ac74)
+- [API en Python](#org7c940d3)
+  - [Documentation :](#org0007a1d)
+  - [Installation :](#org1bfe551)
+  - [Bac à sable](#org97e6f38)
+- [Server](#orgbb2f3ad)
+  - [Simple exemple](#org3c23ac8)
+  - [URL de callback HelloAsso](#org1c9296b)
 
 
-<a id="orga9dffe8"></a>
+<a id="org7c940d3"></a>
 
 # API en Python
 
 Afin de faire des requêtes sur une API REST, il y a une super bibliothèque : "requests".
 
 
-<a id="org7a7f002"></a>
+<a id="org0007a1d"></a>
 
 ## Documentation :
 
 <https://requests.readthedocs.io/en/master/>
 
 
-<a id="org5c26704"></a>
+<a id="org1bfe551"></a>
 
 ## Installation :
 
 De mon coté je n'ai rien eu à faire sous Pop<sub>os</sub> 18.04.
 
 
-<a id="orgd99ac74"></a>
+<a id="org97e6f38"></a>
 
 ## Bac à sable
 
@@ -91,15 +94,15 @@ pprint.pprint(r.json())
 
     {'message': 'success',
      'request': {'altitude': 100,
-                 'datetime': 1587743070,
+                 'datetime': 1588965203,
                  'latitude': 48.684426,
                  'longitude': 6.171111,
                  'passes': 5},
-     'response': [{'duration': 349, 'risetime': 1587784693},
-                  {'duration': 622, 'risetime': 1587790308},
-                  {'duration': 656, 'risetime': 1587796085},
-                  {'duration': 651, 'risetime': 1587801910},
-                  {'duration': 655, 'risetime': 1587807726}]}
+     'response': [{'duration': 535, 'risetime': 1588977278},
+                  {'duration': 650, 'risetime': 1588982993},
+                  {'duration': 653, 'risetime': 1588988802},
+                  {'duration': 654, 'risetime': 1588994626},
+                  {'duration': 645, 'risetime': 1589000436}]}
 
 Conversion des timestamps en dates humainement compréhensibles :
 
@@ -110,11 +113,98 @@ dates = [str(datetime.fromtimestamp(d['risetime'])) for d in data['response']]
 dates
 ```
 
-    # Out[55]:
+    # Out[29]:
     #+BEGIN_EXAMPLE
-      ['2020-04-25 05:18:13',
-      '2020-04-25 06:51:48',
-      '2020-04-25 08:28:05',
-      '2020-04-25 10:05:10',
-      '2020-04-25 11:42:06']
+      ['2020-05-09 00:34:38',
+      '2020-05-09 02:09:53',
+      '2020-05-09 03:46:42',
+      '2020-05-09 05:23:46',
+      '2020-05-09 07:00:36']
     #+END_EXAMPLE
+
+
+<a id="orgbb2f3ad"></a>
+
+# Server
+
+
+<a id="org3c23ac8"></a>
+
+## Simple exemple
+
+```ipython
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+```
+
+    # Out[30]:
+
+```bash
+export FLASK_APP=hello.py
+flask run
+```
+
+```ipython
+r = requests.get("http://127.0.0.1:5000/")
+r.status_code, r.text
+```
+
+    # Out[31]:
+    : (200, 'Hello, World!')
+
+Ok, on a un serveur qui sait répondre à une requête GET simple.
+
+```ipython
+from flask import request
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        print(data)
+        return {'coucou': 'coucoutext'}
+    else:
+        return 'coucou'
+```
+
+    # Out[32]:
+
+```ipython
+data = {'key1': 42}
+r = requests.post("http://127.0.0.1:5000/login", data=data)
+r.status_code, r.text
+```
+
+    # Out[33]:
+    : (200, '{"coucou":"coucoutext"}\n')
+
+
+<a id="org1c9296b"></a>
+
+## URL de callback HelloAsso
+
+Nouveau paiement <https://dev.helloasso.com/v3/notifications>
+
+| Paramètre                            | Description                                                  | Format  |
+|------------------------------------ |------------------------------------------------------------ |------- |
+| id                                   | L’identifiant du paiement                                    | string  |
+| date                                 | La date                                                      | string  |
+| amount                               | Le montant du paiement                                       | decimal |
+| type                                 | Type de paiement paiement                                    | string  |
+| url                                  | L’url de la campagne sur laquelle a été effectué le paiement | string  |
+| payer<sub>first</sub><sub>name</sub> | Le prénom du payeur                                          | string  |
+| payer<sub>last</sub><sub>name</sub>  | Le nom du payeur                                             | string  |
+| url<sub>receipt</sub>                | L’url du reçu 	string                                 |         |
+| url<sub>tax</sub><sub>receipt</sub>  | L’url du reçu fiscal                                         | string  |
+| action<sub>id</sub>                  | Action ID à requeter pour les infos complémentaires 	string |         |

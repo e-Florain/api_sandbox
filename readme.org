@@ -14,7 +14,7 @@ import requests
 #+end_src
 
 #+RESULTS:
-: # Out[43]:
+: # Out[1]:
 
 Afin de me faire la main, je vais utiliser une API ouverte :
 http://open-notify.org/ qui met à disposition une partie des données
@@ -119,3 +119,137 @@ dates
 :   '2020-04-23 11:40:45',
 :   '2020-04-23 13:17:36']
 : #+END_EXAMPLE
+
+* Server
+
+** Simple exemple
+#+begin_src ipython :session api :file  :exports both :tangle hello.py
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+#+end_src
+
+#+RESULTS:
+: # Out[4]:
+
+#+BEGIN_SRC bash
+export FLASK_APP=hello.py
+flask run
+#+END_SRC
+
+#+begin_src ipython :session api :file  :exports both
+r = requests.get("http://127.0.0.1:5000/")
+r.status_code, r.text
+#+end_src
+
+#+RESULTS:
+: # Out[7]:
+: : (200, 'Hello, World!')
+
+Ok, on a un serveur qui sait répondre à une requête GET simple.
+
+#+begin_src ipython :session api :file  :exports both :tangle server.py
+from flask import request
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        print(data)
+        return {'coucou': 'coucoutext'}
+    else:
+        return 'coucou'
+#+end_src
+
+#+RESULTS:
+: # Out[9]:
+
+#+begin_src ipython :session api :file  :exports both
+data = {'key1': 42}
+r = requests.post("http://127.0.0.1:5000/login", data=data)
+r.status_code, r.text
+#+end_src
+
+#+RESULTS:
+: # Out[23]:
+: : (200, '{"coucou":"coucoutext"}\n')
+
+** URL de callback HelloAsso
+
+Il est possible de paramétrer le site HelloAsso afin qu'il effectue
+une requête POST sur une URL spécifique.
+https://dev.helloasso.com/v3/notifications
+
+Ici sont présentées les données qui sont transmises lors d'un nouveau paiement.
+| Paramètre        | 	Description                                                        | 	Format  |
+|------------------+----------------------------------------------------------------------------+-----------------|
+| id 	      | L’identifiant du paiement                                                  | 	string  |
+| date 	    | La date                                                                    | 	string  |
+| amount           | 	Le montant du paiement                                             | 	decimal |
+| type 	    | Type de paiement paiement                                                  | 	string  |
+| url 	     | L’url de la campagne sur laquelle a été effectué le paiement               | 	string  |
+| payer_first_name | 	Le prénom du payeur                                                | 	string  |
+| payer_last_name  | 	Le nom du payeur                                                   | 	string  |
+| url_receipt      | 	L’url du reçu                                                      | 	string  |
+| url_tax_receipt  | 	L’url du reçu fiscal 	                                      | string          |
+| action_id        | 	Action ID à requeter pour les infos complémentaires 	string |                 |
+
+Attention, il semblerait qu'un seul paiement d'un utilisateur sur le
+site puisse déclencher plusieurs appels du callback. En effet,
+l'utilisateur peut payer pour ce qu'il achète ET faire un don dans la
+même procédure.
+
+La rubrique "format des responses" stipule que le paiement peut avoir
+plusieurs actions :
+
+#+begin_example
+{
+	"id": "string",
+	"date": "date",
+	"amount": "decimal",
+	"type" : "string",
+	"payer_first_name": "string",
+	"payer_last_name": "string",
+	"payer_address": "string",
+	"payer_zip_code": "string",
+	"payer_city": "string",
+	"payer_country": "string",
+	"payer_email": "string",
+	"payer_birthdate": "date",
+	"payer_citizenship": "string",
+	"payer_society": "string",
+	"payer_is_society": "bool",
+	"url_receipt": "string",
+	"url_tax_receipt": "string",
+	"status": "string",
+	"actions": [
+	    {
+	    "id": "string",
+	    "type": "string",
+	    "amount": "decimal"
+	    }
+	    …
+	]
+}
+#+end_example
+
+Or la notification de nouveau paiement ne comporte qu'un seul ID. Il
+  semblerait donc que lorsqu'un utilisateur effectue une inscription
+  ET un don, la notification est envoyé une fois par action. Ce qui
+  est plutôt pratique car cela permettrait de savoir s'il faut
+  créditer ou simplement remercier la personne.
+
+https://dev.helloasso.com/v3/responses#paiements
+** Cyclos
+
+https://demo.cyclos.org/api
