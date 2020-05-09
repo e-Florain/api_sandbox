@@ -1,4 +1,14 @@
-* API en Python
+* Terminologie
+** Bases de données
+- Base Maison :: base de données contenant tous les adhérents créée et
+     maintenue par nos soins. techno à définir : PostgreSQL ? MangoDB ?
+- Base Cyclos :: base de données spécifique Cyclos,
+
+** TODO Composants logiciels
+- API HelloAsso
+- API Cyclos
+- Connecteur HelloAsso
+* Tests en vracs API en Python
 Afin de faire des requêtes sur une API REST, il y a une super
 bibliothèque : "requests".
 
@@ -120,10 +130,10 @@ dates
 :   '2020-04-23 13:17:36']
 : #+END_EXAMPLE
 
-* Server
+* Connecteur HelloAsso
 
-** Simple exemple
-#+begin_src ipython :session api :file  :exports both :tangle hello.py
+** Exemple simple
+#+begin_src ipython :session api :file  :exports code :tangle hello.py
 from flask import Flask
 app = Flask(__name__)
 
@@ -131,9 +141,6 @@ app = Flask(__name__)
 def hello_world():
     return 'Hello, World!'
 #+end_src
-
-#+RESULTS:
-: # Out[4]:
 
 #+BEGIN_SRC bash
 export FLASK_APP=hello.py
@@ -151,7 +158,7 @@ r.status_code, r.text
 
 Ok, on a un serveur qui sait répondre à une requête GET simple.
 
-#+begin_src ipython :session api :file  :exports both :tangle server.py
+#+begin_src python :tangle server.py
 from flask import request
 from flask import Flask
 
@@ -249,7 +256,27 @@ Or la notification de nouveau paiement ne comporte qu'un seul ID. Il
   est plutôt pratique car cela permettrait de savoir s'il faut
   créditer ou simplement remercier la personne.
 
-https://dev.helloasso.com/v3/responses#paiements
+Autre point important, Il va falloir trouver une solution pour
+identifier de manière sure (et automatique) la personne qui à payé. En
+effet, pour effectuer une adhésion, il faut remplir MANUELLEMENT
+prénom et nom.
+
+Il y a deux cas de figures :
+- Première Adhésion :: ou les informations rentrées par l'utilisateur
+  serviront de référence pour l'ajout dans les différentes bases de données
+
+- Ré-adhésion/Paiement d'un adhérent :: il va falloir
+  s'assurer d'une manière ou d'une autre de retrouver la bonne
+  personne dans la base de données Maison.
+
+Solutions envisagées :
+- Peut être attribuer un identifiant utilisateur à rentrer ?
+- envoyer les utilisateurs existants sur une page pré-remplie ?
+
+
+Il va falloir prévoir de quoi gérer les cas où une personne s'est trompée,
+
+  https://dev.helloasso.com/v3/responses#paiements
 ** Cyclos
 
 https://demo.cyclos.org/api
