@@ -8,6 +8,17 @@
 - API HelloAsso
 - API Cyclos
 - Connecteur HelloAsso
+
+#+begin_src dot :file change.png :cmd circo :cmdline -Tpng :exports none :results drawer
+  digraph G { Connexion_Cyclos -> redirection_vers_HA -> paiement ->
+  HA_POST_vers_Maison -> Maison_POST_vers_Cyclos }
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+[[file:change.png]]
+:END:
+
 * Tests en vracs API en Python
 Afin de faire des requêtes sur une API REST, il y a une super
 bibliothèque : "requests".
@@ -24,7 +35,7 @@ import requests
 #+end_src
 
 #+RESULTS:
-: # Out[1]:
+: # Out[4]:
 
 Afin de me faire la main, je vais utiliser une API ouverte :
 http://open-notify.org/ qui met à disposition une partie des données
@@ -184,17 +195,21 @@ def login():
 #+begin_src ipython :session api :file  :exports both
 data = {'key1': 42}
 r = requests.post("http://127.0.0.1:5000/login", data=data)
-r.status_code, r.text
+r.status_code, r.json()
 #+end_src
 
 #+RESULTS:
-: # Out[23]:
-: : (200, '{"coucou":"coucoutext"}\n')
+: # Out[21]:
+: : (200, {'coucou': 'coucoutext'})
 
 ** URL de callback HelloAsso
 
 Il est possible de paramétrer le site HelloAsso afin qu'il effectue
 une requête POST sur une URL spécifique.
+
+"Les notifications sont réalisées via des requêtes sous format
+URLEncoded et en POST sur les urls que vous aurez définies pour chacun
+des types de notification décrits dans ce chapitre."
 https://dev.helloasso.com/v3/notifications
 
 Ici sont présentées les données qui sont transmises lors d'un nouveau paiement.
@@ -280,3 +295,27 @@ Il va falloir prévoir de quoi gérer les cas où une personne s'est trompée,
 ** Cyclos
 
 https://demo.cyclos.org/api
+
+https://demo.cyclos.org/api/system/payments
+*** Authentification
+
+#+begin_src ipython :session api :file  :exports both
+  r = requests.get("https://demo.cyclos.org/api/auth",
+                   auth=('virgile', 'virgile'))
+  r.status_code, r.json()
+#+end_src
+
+#+RESULTS:
+: # Out[15]:
+: : (401, {'code': 'login'})
+
+Démarrage d'une session
+#+begin_src ipython :session api :file  :exports both
+  r = requests.post("https://demo.cyclos.org/api/auth/session",
+                   auth=('virgile', '4242'))
+  r.status_code, r.json()
+#+end_src
+
+#+RESULTS:
+: # Out[12]:
+: : (401, {'code': 'login'})
