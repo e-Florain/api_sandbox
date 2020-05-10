@@ -231,6 +231,50 @@ site puisse déclencher plusieurs appels du callback. En effet,
 l'utilisateur peut payer pour ce qu'il achète ET faire un don dans la
 même procédure.
 
+Les requetes sont de type URLencoded. Pour l'instant on a utilisé
+uniquement des requêtes Json.
+
+#+begin_src python :tangle server.py
+@app.route('/paiement', methods=['POST'])
+def paiement():
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        print(data, request, type(request))
+        return "Merci, c'est tout bon !"
+    else:
+        return 'Only POST supported'
+#+end_src
+https://fr.wikipedia.org/wiki/Percent-encoding
+Comment simuler une requete HelloAsso:
+#+BEGIN_SRC bash
+curl -d "id=id_42&date=2020-05-10T21:26:45&amount=1438&type=change&payer" -H "Content-Type: application/x-www-form-urlencoded" -X POST http://localhost:5000/paiement
+#+END_SRC
+
+#+RESULTS:
+| Merci | c'est tout bon ! |
+
+Une fois la notification de paiement reçu, il serait bon de récupérer
+des informations supplémentaires sur l'action (je le rappelle,
+l'action est un paiement unique avec un seul type). Une procédure
+d'adhésion accompagnée d'un don renverra donc deux actions.
+
+Une notification de paiement peut donc correspondre à trois types
+d'actions différentes :
+
+- don :: Ici, rien de particulier à faire. Éventuellement envoyer un
+         mail de remerciement.
+- change :: Il faut vérifier que l'utilisateur existe déjà, et si oui
+            ajouter les fonds correspondants sur Cyclos. S'il n'existe
+            pas (possible ?) il faut vérifier qu'il ne vient pas
+            d'être créé lors de la même session.
+- adhésion :: Il faut ajouter l'utilisateur dans la base maison, et
+              dans Cyclos.
+
+A noter que ces types sont hypothétiques car ils correspondent à
+l'idée que je me fais à l'heure actuelle de la situation. Il n'est pas
+certain que l'on puisse définir le contenu des champs types. Mais leur
+contenu devrait pourvoir permettre de différencier ces 3 cas.
+
 La rubrique "format des responses" stipule que le paiement peut avoir
 plusieurs actions :
 

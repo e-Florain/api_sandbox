@@ -1,22 +1,23 @@
-- [Terminologie](#org1b12bd2)
-  - [Bases de données](#orgcc87888)
-  - [Composants logiciels](#org451baa6)
-- [Tests en vracs API en Python](#orgf663c9a)
-  - [Documentation :](#org724b61b)
-  - [Installation :](#orga0ff294)
-  - [Bac à sable](#org0aae37c)
-- [Connecteur HelloAsso](#org021ef47)
-  - [Exemple simple](#org8945307)
-  - [URL de callback HelloAsso](#org0ae9ddc)
-  - [Cyclos](#org2129820)
+- [Terminologie](#org266f40f)
+  - [Bases de données](#orgb3aafd4)
+  - [Composants logiciels](#orgbfcb84b)
+- [Tests en vracs API en Python](#org75e105e)
+  - [Documentation :](#org5ea2fae)
+  - [Installation :](#orgc184517)
+  - [Bac à sable](#orga7018d0)
+- [Connecteur HelloAsso](#org29e2a93)
+  - [Exemple simple](#org4486e54)
+  - [URL de callback HelloAsso](#org9f1bb4f)
+  - [Cyclos](#orgdde854a)
+    - [Authentification](#org5bfcc0f)
 
 
-<a id="org1b12bd2"></a>
+<a id="org266f40f"></a>
 
 # Terminologie
 
 
-<a id="orgcc87888"></a>
+<a id="orgb3aafd4"></a>
 
 ## Bases de données
 
@@ -24,7 +25,7 @@
 -   **Base Cyclos:** base de données spécifique Cyclos,
 
 
-<a id="org451baa6"></a>
+<a id="orgbfcb84b"></a>
 
 ## TODO Composants logiciels
 
@@ -33,28 +34,28 @@
 -   Connecteur HelloAsso
 
 
-<a id="orgf663c9a"></a>
+<a id="org75e105e"></a>
 
 # Tests en vracs API en Python
 
 Afin de faire des requêtes sur une API REST, il y a une super bibliothèque : "requests".
 
 
-<a id="org724b61b"></a>
+<a id="org5ea2fae"></a>
 
 ## Documentation :
 
 <https://requests.readthedocs.io/en/master/>
 
 
-<a id="orga0ff294"></a>
+<a id="orgc184517"></a>
 
 ## Installation :
 
 De mon coté je n'ai rien eu à faire sous Pop<sub>os</sub> 18.04.
 
 
-<a id="org0aae37c"></a>
+<a id="orga7018d0"></a>
 
 ## Bac à sable
 
@@ -120,15 +121,15 @@ pprint.pprint(r.json())
 
     {'message': 'success',
      'request': {'altitude': 100,
-                 'datetime': 1588985557,
+                 'datetime': 1589141483,
                  'latitude': 48.684426,
                  'longitude': 6.171111,
                  'passes': 5},
-     'response': [{'duration': 653, 'risetime': 1588988802},
-                  {'duration': 654, 'risetime': 1588994626},
-                  {'duration': 645, 'risetime': 1589000436},
-                  {'duration': 493, 'risetime': 1589006278},
-                  {'duration': 457, 'risetime': 1589060866}]}
+     'response': [{'duration': 325, 'risetime': 1589144484},
+                  {'duration': 618, 'risetime': 1589150087},
+                  {'duration': 656, 'risetime': 1589155861},
+                  {'duration': 651, 'risetime': 1589161685},
+                  {'duration': 656, 'risetime': 1589167501}]}
 
 Conversion des timestamps en dates humainement compréhensibles :
 
@@ -139,22 +140,22 @@ dates = [str(datetime.fromtimestamp(d['risetime'])) for d in data['response']]
 dates
 ```
 
-    # Out[97]:
+    # Out[6]:
     #+BEGIN_EXAMPLE
-      ['2020-05-09 03:46:42',
-      '2020-05-09 05:23:46',
-      '2020-05-09 07:00:36',
-      '2020-05-09 08:37:58',
-      '2020-05-09 23:47:46']
+      ['2020-05-10 23:01:24',
+      '2020-05-11 00:34:47',
+      '2020-05-11 02:11:01',
+      '2020-05-11 03:48:05',
+      '2020-05-11 05:25:01']
     #+END_EXAMPLE
 
 
-<a id="org021ef47"></a>
+<a id="org29e2a93"></a>
 
 # Connecteur HelloAsso
 
 
-<a id="org8945307"></a>
+<a id="org4486e54"></a>
 
 ## Exemple simple
 
@@ -177,7 +178,7 @@ r = requests.get("http://127.0.0.1:5000/")
 r.status_code, r.text
 ```
 
-    # Out[99]:
+    # Out[8]:
     : (200, 'Hello, World!')
 
 Ok, on a un serveur qui sait répondre à une requête GET simple.
@@ -205,18 +206,20 @@ def login():
 ```ipython
 data = {'key1': 42}
 r = requests.post("http://127.0.0.1:5000/login", data=data)
-r.status_code, r.text
+r.status_code, r.json()
 ```
 
-    # Out[100]:
-    : (200, '{"coucou":"coucoutext"}\n')
+    # Out[9]:
+    : (200, {'coucou': 'coucoutext'})
 
 
-<a id="org0ae9ddc"></a>
+<a id="org9f1bb4f"></a>
 
 ## URL de callback HelloAsso
 
-Il est possible de paramétrer le site HelloAsso afin qu'il effectue une requête POST sur une URL spécifique. <https://dev.helloasso.com/v3/notifications>
+Il est possible de paramétrer le site HelloAsso afin qu'il effectue une requête POST sur une URL spécifique.
+
+"Les notifications sont réalisées via des requêtes sous format URLEncoded et en POST sur les urls que vous aurez définies pour chacun des types de notification décrits dans ce chapitre." <https://dev.helloasso.com/v3/notifications>
 
 Ici sont présentées les données qui sont transmises lors d'un nouveau paiement.
 
@@ -234,6 +237,35 @@ Ici sont présentées les données qui sont transmises lors d'un nouveau paiemen
 | action<sub>id</sub>                  | Action ID à requeter pour les infos complémentaires 	string |         |
 
 Attention, il semblerait qu'un seul paiement d'un utilisateur sur le site puisse déclencher plusieurs appels du callback. En effet, l'utilisateur peut payer pour ce qu'il achète ET faire un don dans la même procédure.
+
+Les requetes sont de type URLencoded. Pour l'instant on a utilisé uniquement des requêtes Json.
+
+```python
+@app.route('/paiement', methods=['POST'])
+def paiement():
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        print(data, request, type(request))
+        return "Merci, c'est tout bon !"
+    else:
+        return 'Only POST supported'
+```
+
+<https://fr.wikipedia.org/wiki/Percent-encoding> Comment simuler une requete HelloAsso:
+
+```bash
+curl -d "id=id_42&date=2020-05-10T21:26:45&amount=1438&type=change&payer" -H "Content-Type: application/x-www-form-urlencoded" -X POST http://localhost:5000/paiement
+```
+
+Une fois la notification de paiement reçu, il serait bon de récupérer des informations supplémentaires sur l'action (je le rappelle, l'action est un paiement unique avec un seul type). Une procédure d'adhésion accompagnée d'un don renverra donc deux actions.
+
+Une notification de paiement peut donc correspondre à trois types d'actions différentes :
+
+-   **don:** Ici, rien de particulier à faire. Éventuellement envoyer un mail de remerciement.
+-   **change:** Il faut vérifier que l'utilisateur existe déjà, et si oui ajouter les fonds correspondants sur Cyclos. S'il n'existe pas (possible ?) il faut vérifier qu'il ne vient pas d'être créé lors de la même session.
+-   **adhésion:** Il faut ajouter l'utilisateur dans la base maison, et dans Cyclos.
+
+A noter que ces types sont hypothétiques car ils correspondent à l'idée que je me fais à l'heure actuelle de la situation. Il n'est pas certain que l'on puisse définir le contenu des champs types. Mais leur contenu devrait pourvoir permettre de différencier ces 3 cas.
 
 La rubrique "format des responses" stipule que le paiement peut avoir plusieurs actions :
 
@@ -286,8 +318,35 @@ Il va falloir prévoir de quoi gérer les cas où une personne s'est trompée,
 <https://dev.helloasso.com/v3/responses#paiements>
 
 
-<a id="org2129820"></a>
+<a id="orgdde854a"></a>
 
 ## Cyclos
 
 <https://demo.cyclos.org/api>
+
+<https://demo.cyclos.org/api/system/payments>
+
+
+<a id="org5bfcc0f"></a>
+
+### Authentification
+
+```ipython
+r = requests.get("https://demo.cyclos.org/api/auth",
+                 auth=('virgile', 'virgile'))
+r.status_code, r.json()
+```
+
+    # Out[10]:
+    : (401, {'code': 'login'})
+
+Démarrage d'une session
+
+```ipython
+r = requests.post("https://demo.cyclos.org/api/auth/session",
+                 auth=('virgile', '4242'))
+r.status_code, r.json()
+```
+
+    # Out[11]:
+    : (401, {'code': 'login'})
