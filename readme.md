@@ -1,23 +1,28 @@
-- [Terminologie](#org266f40f)
-  - [Bases de données](#orgb3aafd4)
-  - [Composants logiciels](#orgbfcb84b)
-- [Tests en vracs API en Python](#org75e105e)
-  - [Documentation :](#org5ea2fae)
-  - [Installation :](#orgc184517)
-  - [Bac à sable](#orga7018d0)
-- [Connecteur HelloAsso](#org29e2a93)
-  - [Exemple simple](#org4486e54)
-  - [URL de callback HelloAsso](#org9f1bb4f)
-  - [Cyclos](#orgdde854a)
-    - [Authentification](#org5bfcc0f)
+- [Terminologie](#orgfa4d2b0)
+  - [Bases de données](#org88b2f16)
+  - [Composants logiciels](#org159d619)
+- [Tests en vracs API en Python](#org5440346)
+  - [Documentation :](#orgd53106e)
+  - [Installation :](#org24cbb35)
+  - [Bac à sable](#orge034818)
+- [Connecteur HelloAsso](#org407ef71)
+  - [Interaction avec l'API](#org4ee615a)
+    - [Gestion des secrets :](#orgf83158e)
+    - [Récupération de l'ID](#org90139a4)
+    - [Récupération des listes](#org3d432a7)
+    - [Récupération des détails](#org6c2fe62)
+  - [Serveur flask](#org5a26005)
+  - [URL de callback HelloAsso](#org3a4b42a)
+  - [Cyclos](#org63d2b14)
+    - [Authentification](#org81f1b0c)
 
 
-<a id="org266f40f"></a>
+<a id="orgfa4d2b0"></a>
 
 # Terminologie
 
 
-<a id="orgb3aafd4"></a>
+<a id="org88b2f16"></a>
 
 ## Bases de données
 
@@ -25,7 +30,7 @@
 -   **Base Cyclos:** base de données spécifique Cyclos,
 
 
-<a id="orgbfcb84b"></a>
+<a id="org159d619"></a>
 
 ## TODO Composants logiciels
 
@@ -34,28 +39,28 @@
 -   Connecteur HelloAsso
 
 
-<a id="org75e105e"></a>
+<a id="org5440346"></a>
 
 # Tests en vracs API en Python
 
 Afin de faire des requêtes sur une API REST, il y a une super bibliothèque : "requests".
 
 
-<a id="org5ea2fae"></a>
+<a id="orgd53106e"></a>
 
 ## Documentation :
 
 <https://requests.readthedocs.io/en/master/>
 
 
-<a id="orgc184517"></a>
+<a id="org24cbb35"></a>
 
 ## Installation :
 
 De mon coté je n'ai rien eu à faire sous Pop<sub>os</sub> 18.04.
 
 
-<a id="orga7018d0"></a>
+<a id="orge034818"></a>
 
 ## Bac à sable
 
@@ -121,15 +126,15 @@ pprint.pprint(r.json())
 
     {'message': 'success',
      'request': {'altitude': 100,
-                 'datetime': 1589141483,
+                 'datetime': 1589315665,
                  'latitude': 48.684426,
                  'longitude': 6.171111,
                  'passes': 5},
-     'response': [{'duration': 325, 'risetime': 1589144484},
-                  {'duration': 618, 'risetime': 1589150087},
-                  {'duration': 656, 'risetime': 1589155861},
-                  {'duration': 651, 'risetime': 1589161685},
-                  {'duration': 656, 'risetime': 1589167501}]}
+     'response': [{'duration': 533, 'risetime': 1589317219},
+                  {'duration': 650, 'risetime': 1589322932},
+                  {'duration': 653, 'risetime': 1589328741},
+                  {'duration': 654, 'risetime': 1589334565},
+                  {'duration': 645, 'risetime': 1589340375}]}
 
 Conversion des timestamps en dates humainement compréhensibles :
 
@@ -140,24 +145,174 @@ dates = [str(datetime.fromtimestamp(d['risetime'])) for d in data['response']]
 dates
 ```
 
-    # Out[6]:
+    # Out[98]:
     #+BEGIN_EXAMPLE
-      ['2020-05-10 23:01:24',
-      '2020-05-11 00:34:47',
-      '2020-05-11 02:11:01',
-      '2020-05-11 03:48:05',
-      '2020-05-11 05:25:01']
+      ['2020-05-12 23:00:19',
+      '2020-05-13 00:35:32',
+      '2020-05-13 02:12:21',
+      '2020-05-13 03:49:25',
+      '2020-05-13 05:26:15']
     #+END_EXAMPLE
 
 
-<a id="org29e2a93"></a>
+<a id="org407ef71"></a>
 
 # Connecteur HelloAsso
 
 
-<a id="org4486e54"></a>
+<a id="org4ee615a"></a>
 
-## Exemple simple
+## Interaction avec l'API
+
+
+<a id="orgf83158e"></a>
+
+### Gestion des secrets :
+
+On va pour l'instant utiliser un fichier de config qui ne sera pas ajouté sur le dépôt pour des raisons évidentes. Voici un exemple du fichier de config à renseigner.
+
+```python
+url="https://api.helloasso.com/v3/"
+user="adminAPI"
+password="xxxx"
+```
+
+Afin d'être certains de ne pas ajouter le vrai fichier par erreur sur le dépôt, on l'ajoute à gitignore.
+
+```bash
+config.py
+```
+
+Une fois le fichier complété :
+
+```ipython
+import config as cfg
+cfg.url
+```
+
+    # Out[99]:
+    : 'https://api.helloasso.com/v3/'
+
+    # Out[12]:
+    : <Response [200]>
+
+```ipython
+  from enum import Enum
+  class HaType(Enum):
+      org = 'organizations'
+      cpn = 'campaigns'
+      act = 'actions'
+      pay = 'payments'
+
+  for t in HaType:
+      print(t)
+
+HaType.org.value
+```
+
+    # Out[100]:
+    : 'organizations'
+
+
+<a id="org90139a4"></a>
+
+### Récupération de l'ID
+
+C'est un peu contre intuitif, mais le moyen de récupérer l'ID de l'organisation est d'interroger la liste complète des organisations accessibles à l'utilisateur spécifique.
+
+```ipython
+import requests
+url = 'https://api.helloasso.com/v3/organizations.json'
+r= requests.get(url, auth=(cfg.user, cfg.password))
+resources = r.json()['resources']
+if len(resources) == 1:
+  id = resources[0]['id']
+```
+
+
+<a id="org3d432a7"></a>
+
+### Récupération des listes
+
+Exemple liste des paiements effectués par "Virgile"
+
+```ipython
+url = 'https://api.helloasso.com/v3/payments.json'
+params = {'results_per_page': 1000}
+r = requests.get(url, auth=(cfg.user, cfg.password), params=params)
+resources = r.json()['resources']
+resources = [resource for resource in resources if resource['payer_first_name'] == 'Virgile']
+```
+
+Ce qui donne une liste ici ne contenant qu'un seule élément car je l'ai filtrée, qui donne le résultat suivant une fois anonymisé. :
+
+    [{'id': '0000xxxxxxxx',
+    'date': '2020-xx-xx17T15:05:00',
+    'amount': 20.0,
+    'type': 'CREDIT',
+    'mean': 'CARD',
+    'payer_first_name': 'Virgile',
+    'payer_last_name': 'Dupond',
+    'payer_address': '',
+    'payer_zip_code': '',
+    'payer_city': '',
+    'payer_country': 'FRA',
+    'payer_email': 'bob.dupond@pm.me',
+    'payer_society': '',
+    'payer_is_society': False,
+    'url_receipt': 'https://www.helloasso.com/associations/<nom-association>/adhesions/<nom-du-formulaire>/paiement-attestation/xxxxxxxx',
+    'url_tax_receipt': '',
+    'actions': [{'id': '000xxxxxxxxx',
+    'type': 'SUBSCRIPTION',
+    'amount': 10.0,
+    'status': 'PROCESSED'},
+    {'id': '000xxxxxxxxx',
+    'type': 'DONATION',
+    'amount': 10.0,
+    'status': 'PROCESSED'}],
+    'status': 'AUTHORIZED'}]
+
+
+<a id="org6c2fe62"></a>
+
+### Récupération des détails
+
+Ici, on va récupérer les détails de la première action du paiement.
+
+```ipython
+action_id = resources[0]['actions'][0]['id']
+url = 'https://api.helloasso.com/v3/actions/{}.json'.format(action_id)
+r = r = requests.get(url, auth=(cfg.user, cfg.password))
+```
+
+Une fois anonymisé :
+
+    {'id': '000xxxxxxxxx',
+    'id_campaign': '000000xxxxxx',
+    'id_organism': '00000xxxxxxx',
+    'id_payment': '0000xxxxxxxx',
+    'date': '2020-xx-xxT15:04:40.8033672',
+    'amount': 10.0,
+    'type': 'SUBSCRIPTION',
+    'first_name': 'Virgile ',
+    'last_name': 'xxxxx',
+    'email': 'albert.bob@libre.fr',
+    'custom_infos': [{'label': 'Email', 'value': 'albert.bob@libre.fr'},
+    {'label': 'Adresse', 'value': '42 rue du moulin derrière la maison jaune'},
+    {'label': 'Code Postal', 'value': '54000'},
+    {'label': 'Ville', 'value': 'Nancy'},
+    {'label': 'Numéro de téléphone', 'value': 'xxxxxxxxxx'},
+    {'label': "Numéro de l'association soutenue (voir http://www.monnaielocalenancy.fr/doc/UnPourCentAsso.pdf)",
+    'value': 'xx'},
+    {'label': "Je souhaite m'impliquer bénévolement dans Le Xxxxxx et être rappelé par un membre de l'association ?",
+    'value': 'Oui'}],
+    'status': 'PROCESSED',
+    'option_label': 'Adhésion utilisateurs'}
+
+
+<a id="org5a26005"></a>
+
+## Serveur flask
 
 ```ipython
 from flask import Flask
@@ -178,7 +333,7 @@ r = requests.get("http://127.0.0.1:5000/")
 r.status_code, r.text
 ```
 
-    # Out[8]:
+    # Out[105]:
     : (200, 'Hello, World!')
 
 Ok, on a un serveur qui sait répondre à une requête GET simple.
@@ -209,11 +364,11 @@ r = requests.post("http://127.0.0.1:5000/login", data=data)
 r.status_code, r.json()
 ```
 
-    # Out[9]:
+    # Out[106]:
     : (200, {'coucou': 'coucoutext'})
 
 
-<a id="org9f1bb4f"></a>
+<a id="org3a4b42a"></a>
 
 ## URL de callback HelloAsso
 
@@ -318,7 +473,7 @@ Il va falloir prévoir de quoi gérer les cas où une personne s'est trompée,
 <https://dev.helloasso.com/v3/responses#paiements>
 
 
-<a id="orgdde854a"></a>
+<a id="org63d2b14"></a>
 
 ## Cyclos
 
@@ -327,7 +482,7 @@ Il va falloir prévoir de quoi gérer les cas où une personne s'est trompée,
 <https://demo.cyclos.org/api/system/payments>
 
 
-<a id="org5bfcc0f"></a>
+<a id="org81f1b0c"></a>
 
 ### Authentification
 
@@ -337,7 +492,7 @@ r = requests.get("https://demo.cyclos.org/api/auth",
 r.status_code, r.json()
 ```
 
-    # Out[10]:
+    # Out[107]:
     : (401, {'code': 'login'})
 
 Démarrage d'une session
@@ -348,5 +503,5 @@ r = requests.post("https://demo.cyclos.org/api/auth/session",
 r.status_code, r.json()
 ```
 
-    # Out[11]:
+    # Out[108]:
     : (401, {'code': 'login'})
