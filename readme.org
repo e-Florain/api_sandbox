@@ -19,6 +19,37 @@
 [[file:change.png]]
 :END:
 
+* Gestion des secrets :
+
+On va pour l'instant utiliser un fichier de config qui ne sera pas
+ajouté sur le dépôt pour des raisons évidentes. Voici un exemple du
+fichier de config à renseigner.
+#+begin_src python :tangle config.py.example :results none
+  ha = {'url': "https://api.helloasso.com/v3/",
+        'user': 'adminAPI',
+        'password': 'xxxx'}
+  db = {'name': 'coucou',
+        'user': 'user',
+        'password': 'xxxx'}
+#+end_src
+
+Afin d'être certains de ne pas ajouter le vrai fichier par erreur sur
+le dépôt, on l'ajoute à gitignore.
+
+#+BEGIN_SRC bash :tangle .gitignore
+config.py
+#+END_SRC
+
+Une fois le fichier complété :
+
+#+begin_src ipython :session api :file  :exports both
+import config as cfg
+cfg.ha['url']
+#+end_src
+
+#+RESULTS:
+: # Out[1]:
+: : 'https://api.helloasso.com/v3/'
 * API en Python (Requests)
 Afin de faire des requêtes sur une API REST, il y a une super
 bibliothèque : "requests".
@@ -201,34 +232,6 @@ for first_name, last_name in cursor:
 * Connecteur HelloAsso
 
 ** Interaction avec l'API
-*** Gestion des secrets :
-
-On va pour l'instant utiliser un fichier de config qui ne sera pas
-ajouté sur le dépôt pour des raisons évidentes. Voici un exemple du
-fichier de config à renseigner.
-#+begin_src python :tangle config.py.example :results none
-url="https://api.helloasso.com/v3/"
-user="adminAPI"
-password="xxxx"
-#+end_src
-
-Afin d'être certains de ne pas ajouter le vrai fichier par erreur sur
-le dépôt, on l'ajoute à gitignore.
-
-#+BEGIN_SRC bash :tangle .gitignore
-config.py
-#+END_SRC
-
-Une fois le fichier complété :
-
-#+begin_src ipython :session api :file  :exports both
-import config as cfg
-cfg.url
-#+end_src
-
-#+RESULTS:
-: # Out[1]:
-: : 'https://api.helloasso.com/v3/'
 
 #+begin_src ipython :session api :file  :exports both
   from enum import Enum
@@ -268,7 +271,7 @@ Exemple liste des paiements effectués par "Virgile"
 #+begin_src ipython :session api :file  :exports code
 url = 'https://api.helloasso.com/v3/payments.json'
 params = {'results_per_page': 1000}
-r = requests.get(url, auth=(cfg.user, cfg.password), params=params)
+r = requests.get(url, auth=(cfg.ha['user'], cfg.ha['password']), params=params)
 resources = r.json()['resources']
 resources = [resource for resource in resources if resource['payer_first_name'] == 'Virgile']
 #+end_src
@@ -308,7 +311,7 @@ Ici, on va récupérer les détails de la première action du paiement.
 #+begin_src ipython :session api :file  :exports code
 action_id = resources[0]['actions'][0]['id']
 url = 'https://api.helloasso.com/v3/actions/{}.json'.format(action_id)
-r = requests.get(url, auth=(cfg.user, cfg.password))
+r = requests.get(url, auth=(cfg.ha['user'], cfg.ha['password']))
 #+end_src
 
 Une fois anonymisé :

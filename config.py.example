@@ -1,3 +1,6 @@
-url="https://api.helloasso.com/v3/"
-user="adminAPI"
-password="xxxx"
+ha = {'url': "https://api.helloasso.com/v3/",
+      'user': 'adminAPI',
+      'password': 'xxxx'}
+db = {'name': 'coucou',
+      'user': 'user',
+      'password': 'xxxx'}
