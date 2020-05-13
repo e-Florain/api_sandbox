@@ -19,7 +19,7 @@
 [[file:change.png]]
 :END:
 
-* Tests en vracs API en Python
+* API en Python (Requests)
 Afin de faire des requêtes sur une API REST, il y a une super
 bibliothèque : "requests".
 
@@ -141,6 +141,63 @@ dates
 :   '2020-04-23 13:17:36']
 : #+END_EXAMPLE
 
+* Maria DB
+Il existe un connecteur python, qui utilise le connecteur c.
+https://mariadb.com/resources/blog/mariadb-connector-python-beta-now-available/
+
+Prérequis :
+- Install Python 3 (minimum supported version is 3.6)
+- Access a MariaDB 10.x instance
+
+#+BEGIN_SRC bash
+sudo apt install mariadb-server mariadb-client
+#+END_SRC
+
+- Install MariaDB Connector/C version 3.1.5 or newer :: shipped with mariadb-server >= 10.3
+
+*** Connexion à la base :
+#+begin_src ipython :session api :file  :exports both
+  import mysql.connector as mariadb
+  import config as cfg
+  mariadb_connection = mariadb.connect(user=cfg.db_user,
+                                       password=cfg.db_password,
+                                       database=cfg.db_name,
+                                       buffered=True)
+  cursor = mariadb_connection.cursor()
+#+end_src
+
+#+RESULTS:
+: # Out[144]:
+
+#+BEGIN_SRC
+CREATE TABLE adherents
+(adherent_id INT AUTO_INCREMENT PRIMARY KEY,
+name_last VARCHAR(50),
+name_first VARCHAR(50),
+mail VARCHAR(50),
+country VARCHAR(50) );
+#+END_SRC
+
+*** Écriture dans la base :
+#+begin_src ipython :session api :file  :exports both
+cursor.execute("INSERT INTO adherents (name_first, name_last) VALUES (%s,%s)", ('virgile', 'coucou'))
+mariadb_connection.commit()
+#+end_src
+
+Ici le commit sert à valider les modifications.
+#+RESULTS:
+: # Out[145]:
+
+*** Lecture dans la base :
+#+begin_src ipython :session api :file  :exports both
+cursor.execute("SELECT name_first, name_last FROM adherents")
+for first_name, last_name in cursor:
+    print("First name: {}, Last name: {}".format(first_name,last_name))
+#+end_src
+
+#+RESULTS:
+: # Out[147]:
+
 * Connecteur HelloAsso
 
 ** Interaction avec l'API
@@ -173,10 +230,6 @@ cfg.url
 : # Out[1]:
 : : 'https://api.helloasso.com/v3/'
 
-#+RESULTS:
-: # Out[12]:
-: : <Response [200]>
-
 #+begin_src ipython :session api :file  :exports both
   from enum import Enum
   class HaType(Enum):
@@ -196,6 +249,7 @@ HaType.org.value
 : : 'organizations'
 
 *** Récupération de l'ID
+
 C'est un peu contre intuitif, mais le moyen de récupérer l'ID de
 l'organisation est d'interroger la liste complète des organisations
 accessibles à l'utilisateur spécifique.
@@ -254,7 +308,7 @@ Ici, on va récupérer les détails de la première action du paiement.
 #+begin_src ipython :session api :file  :exports code
 action_id = resources[0]['actions'][0]['id']
 url = 'https://api.helloasso.com/v3/actions/{}.json'.format(action_id)
-r = r = requests.get(url, auth=(cfg.user, cfg.password))
+r = requests.get(url, auth=(cfg.user, cfg.password))
 #+end_src
 
 Une fois anonymisé :
