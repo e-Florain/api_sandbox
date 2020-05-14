@@ -4,3 +4,7 @@ ha = {'url': "https://api.helloasso.com/v3/",
 db = {'name': 'coucou',
       'user': 'user',
       'password': 'xxxx'}
+cyclos = {'url': 'https://demo.cyclos.org/api',
+          'user': 'user',
+          'password': 'xxx',
+          'systemIDNEF': 'xxxxx'}

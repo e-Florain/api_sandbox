@@ -31,6 +31,10 @@ fichier de config à renseigner.
   db = {'name': 'coucou',
         'user': 'user',
         'password': 'xxxx'}
+  cyclos = {'url': 'https://demo.cyclos.org/api',
+            'user': 'user',
+            'password': 'xxx',
+            'systemIDNEF': 'xxxxx'}
 #+end_src
 
 Afin d'être certains de ne pas ajouter le vrai fichier par erreur sur
@@ -48,7 +52,7 @@ cfg.ha['url']
 #+end_src
 
 #+RESULTS:
-: # Out[1]:
+: # Out[75]:
 : : 'https://api.helloasso.com/v3/'
 * API en Python (Requests)
 Afin de faire des requêtes sur une API REST, il y a une super
@@ -180,25 +184,26 @@ Prérequis :
 - Install Python 3 (minimum supported version is 3.6)
 - Access a MariaDB 10.x instance
 
-#+BEGIN_SRC bash
+#+BEGIN_SRC bash :export code
 sudo apt install mariadb-server mariadb-client
 #+END_SRC
 
 - Install MariaDB Connector/C version 3.1.5 or newer :: shipped with mariadb-server >= 10.3
 
 *** Connexion à la base :
-#+begin_src ipython :session api :file  :exports both
+#+begin_src ipython :session api :file  :exports code
   import mysql.connector as mariadb
   import config as cfg
-  mariadb_connection = mariadb.connect(user=cfg.db_user,
-                                       password=cfg.db_password,
-                                       database=cfg.db_name,
+  mariadb_connection = mariadb.connect(user=cfg.db['user'],
+                                       password=cfg.db['password'],
+                                       database=cfg.db['name'],
                                        buffered=True)
   cursor = mariadb_connection.cursor()
 #+end_src
 
 #+RESULTS:
-: # Out[144]:
+: # Out[5]:
+
 
 #+BEGIN_SRC
 CREATE TABLE adherents
@@ -215,42 +220,26 @@ cursor.execute("INSERT INTO adherents (name_first, name_last) VALUES (%s,%s)", (
 mariadb_connection.commit()
 #+end_src
 
+#+RESULTS:
+: # Out[11]:
+
 Ici le commit sert à valider les modifications.
 #+RESULTS:
 : # Out[145]:
 
 *** Lecture dans la base :
 #+begin_src ipython :session api :file  :exports both
-cursor.execute("SELECT name_first, name_last FROM adherents")
-for first_name, last_name in cursor:
-    print("First name: {}, Last name: {}".format(first_name,last_name))
+cursor.execute("SELECT adherent_id, name_first, name_last FROM adherents")
+print(cursor)
+for id, first_name, last_name in cursor:
+    print("First name: {}, Last name: {}, id: {}".format(first_name,last_name, id))
 #+end_src
 
 #+RESULTS:
-: # Out[147]:
+: # Out[12]:
 
 * Connecteur HelloAsso
-
 ** Interaction avec l'API
-
-#+begin_src ipython :session api :file  :exports both
-  from enum import Enum
-  class HaType(Enum):
-      org = 'organizations'
-      cpn = 'campaigns'
-      act = 'actions'
-      pay = 'payments'
-
-  for t in HaType:
-      print(t)
-
-HaType.org.value
-#+end_src
-
-#+RESULTS:
-: # Out[29]:
-: : 'organizations'
-
 *** Récupération de l'ID
 
 C'est un peu contre intuitif, mais le moyen de récupérer l'ID de
@@ -259,22 +248,28 @@ accessibles à l'utilisateur spécifique.
 #+begin_src ipython :session api :file  :exports both :results none
   import requests
   url = 'https://api.helloasso.com/v3/organizations.json'
-  r= requests.get(url, auth=(cfg.user, cfg.password))
-  resources = r.json()['resources']
-  if len(resources) == 1:
-    id = resources[0]['id']
+  r= requests.get(url, auth=(cfg.ha['user'], cfg.ha['password']))
+  if r.status_code == 200:
+      resources = r.json()['resources']
+      if len(resources) == 1:
+          id = resources[0]['id']
 #+end_src
 
 *** Récupération des listes
 
 Exemple liste des paiements effectués par "Virgile"
 #+begin_src ipython :session api :file  :exports code
-url = 'https://api.helloasso.com/v3/payments.json'
-params = {'results_per_page': 1000}
-r = requests.get(url, auth=(cfg.ha['user'], cfg.ha['password']), params=params)
-resources = r.json()['resources']
-resources = [resource for resource in resources if resource['payer_first_name'] == 'Virgile']
+  import config as cfg
+  url = 'https://api.helloasso.com/v3/payments.json'
+  params = {'results_per_page': 1000}
+  r = requests.get(url, auth=(cfg.ha['user'], cfg.ha['password']), params=params)
+  if r.status_code == 200:
+      resources = r.json()['resources']
+      resources = [resource for resource in resources if resource['payer_first_name'] == 'Virgile']
 #+end_src
+
+#+RESULTS:
+: # Out[77]:
 
 Ce qui donne une liste ici ne contenant qu'un seule élément car je
 l'ai filtrée, qui donne le résultat suivant une fois anonymisé. :
