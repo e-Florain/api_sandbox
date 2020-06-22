@@ -52,7 +52,7 @@ cfg.ha['url']
 #+end_src
 
 #+RESULTS:
-: # Out[75]:
+: # Out[1]:
 : : 'https://api.helloasso.com/v3/'
 * API en Python (Requests)
 Afin de faire des requêtes sur une API REST, il y a une super
@@ -245,7 +245,7 @@ for id, first_name, last_name in cursor:
 C'est un peu contre intuitif, mais le moyen de récupérer l'ID de
 l'organisation est d'interroger la liste complète des organisations
 accessibles à l'utilisateur spécifique.
-#+begin_src ipython :session api :file  :exports both :results none
+#+begin_src ipython :session api :file  :exports both :results both
   import requests
   url = 'https://api.helloasso.com/v3/organizations.json'
   r= requests.get(url, auth=(cfg.ha['user'], cfg.ha['password']))
@@ -253,7 +253,12 @@ accessibles à l'utilisateur spécifique.
       resources = r.json()['resources']
       if len(resources) == 1:
           id = resources[0]['id']
+  id
 #+end_src
+
+#+RESULTS:
+: # Out[4]:
+: : '000001201911'
 
 *** Récupération des listes
 
@@ -266,10 +271,40 @@ Exemple liste des paiements effectués par "Virgile"
   if r.status_code == 200:
       resources = r.json()['resources']
       resources = [resource for resource in resources if resource['payer_first_name'] == 'Virgile']
+resources
 #+end_src
 
 #+RESULTS:
-: # Out[77]:
+#+begin_example
+# Out[5]:
+,#+BEGIN_EXAMPLE
+  [{'id': '000067125943',
+  'date': '2020-02-17T15:05:00',
+  'amount': 20.0,
+  'type': 'CREDIT',
+  'mean': 'CARD',
+  'payer_first_name': 'Virgile',
+  'payer_last_name': 'Daugé',
+  'payer_address': '',
+  'payer_zip_code': '',
+  'payer_city': '',
+  'payer_country': 'FRA',
+  'payer_email': 'virgile.dauge@pm.me',
+  'payer_society': '',
+  'payer_is_society': False,
+  'url_receipt': 'https://www.helloasso.com/associations/le-florain/adhesions/le-florain-formulaire-d-adhesion-utilisateurs/paiement-attestation/13163682',
+  'url_tax_receipt': '',
+  'actions': [{'id': '000131636823',
+  'type': 'SUBSCRIPTION',
+  'amount': 10.0,
+  'status': 'PROCESSED'},
+  {'id': '000131636851',
+  'type': 'DONATION',
+  'amount': 10.0,
+  'status': 'PROCESSED'}],
+  'status': 'AUTHORIZED'}]
+,#+END_EXAMPLE
+#+end_example
 
 Ce qui donne une liste ici ne contenant qu'un seule élément car je
 l'ai filtrée, qui donne le résultat suivant une fois anonymisé. :
@@ -333,6 +368,84 @@ Une fois anonymisé :
   'status': 'PROCESSED',
   'option_label': 'Adhésion utilisateurs'}
 #+END_EXAMPLE
+
+#+begin_src ipython :session api :file  :exports both
+url = 'https://api.helloasso.com/v3/campaigns.json'
+r = requests.get(url, auth=(cfg.ha['user'], cfg.ha['password']))
+r.json()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# Out[7]:
+,#+BEGIN_EXAMPLE
+  {'resources': [{'id': '000000263336',
+  'name': 'TEST - Change Florain numérique crédit unitaire',
+  'slug': 'TEST---Change-Florain-numérique-crédit-unitaire',
+  'type': 'PAYMENT_FORM',
+  'state': 'PUBLIC',
+  'funding': 0.0,
+  'supporters': 0,
+  'creation_date': '2020-05-20T22:23:30.199907',
+  'last_update': '2020-05-20T22:34:56.814805+02:00'},
+  {'id': '000000288223',
+  'name': "Le Florain - Formulaire d'adhésion Professionnels",
+  'slug': 'le-florain-formulaire-d-adhesion-acteurs',
+  'type': 'MEMBERSHIP',
+  'state': 'PUBLIC',
+  'funding': 2810.0,
+  'supporters': 49,
+  'url': 'https://www.helloasso.com/associations/le-florain/adhesions/le-florain-formulaire-d-adhesion-acteurs',
+  'id_organism': '000001201911',
+  'slug_organism': 'le-florain',
+  'creation_date': '2018-12-04T14:01:15.7922216',
+  'last_update': '2019-01-03T13:43:49.7433333'},
+  {'id': '000000349203',
+  'name': "Le Florain - Formulaire d'adhésion Utilisateurs",
+  'slug': 'le-florain-formulaire-d-adhesion-utilisateurs',
+  'type': 'MEMBERSHIP',
+  'state': 'PUBLIC',
+  'funding': 696.0,
+  'supporters': 60,
+  'url': 'https://www.helloasso.com/associations/le-florain/adhesions/le-florain-formulaire-d-adhesion-utilisateurs',
+  'id_organism': '000001201911',
+  'slug_organism': 'le-florain',
+  'creation_date': '2019-04-02T14:02:48.8763582',
+  'last_update': '2020-03-02T10:54:32.0866667'},
+  {'id': '000000984091',
+  'name': 'Brocante du Florain',
+  'slug': 'brocante-du-florain',
+  'type': 'EVENT',
+  'state': 'PUBLIC',
+  'funding': 225.0,
+  'supporters': 19,
+  'url': 'https://www.helloasso.com/associations/le-florain/evenements/brocante-du-florain',
+  'id_organism': '000001201911',
+  'slug_organism': 'le-florain',
+  'creation_date': '2019-07-23T14:24:56.169856',
+  'last_update': '2019-10-02T08:10:00.94',
+  'place_name': "Grande Halle de l'Octroi",
+  'place_address': "Boulevard d'Austrasie",
+  'place_city': 'NANCY',
+  'place_zipcode': '54000',
+  'place_country': 'FRA',
+  'start_date': '2019-10-13T10:00:00',
+  'end_date': '2019-10-13T18:00:00'},
+  {'id': '000001079652',
+  'name': 'Le Florain - Formulaire de dons',
+  'slug': '1',
+  'type': 'FORM',
+  'state': 'PUBLIC',
+  'funding': 510.0,
+  'supporters': 2,
+  'url': 'https://www.helloasso.com/associations/le-florain/formulaires/1',
+  'id_organism': '000001201911',
+  'slug_organism': 'le-florain',
+  'creation_date': '2019-06-06T16:04:12.5404428',
+  'last_update': '2019-06-06T16:04:58.1'}],
+  'pagination': {'page': 1, 'max_page': 1, 'results_per_page': 20}}
+,#+END_EXAMPLE
+#+end_example
 
 ** Serveur flask
 #+begin_src ipython :session api :file  :exports code :tangle hello.py
@@ -527,6 +640,29 @@ Solutions envisagées :
 Il va falloir prévoir de quoi gérer les cas où une personne s'est trompée,
 
   https://dev.helloasso.com/v3/responses#paiements
+** Logging
+
+A chaque logiciel son journal !
+#+begin_src ipython :session api :file  :exports both
+import logging
+logging.basicConfig(filename='example.log',level=logging.DEBUG)
+logging.debug('This message should go to the log file')
+logging.info('So should this')
+logging.warning('And this, too')
+#+end_src
+
+#+RESULTS:
+: # Out[8]:
+
+#+BEGIN_SRC bash
+  cat example.log
+#+END_SRC
+
+#+RESULTS:
+| DEBUG:root:This  | message | should | go | to | the | log | file |
+| INFO:root:So     | should  | this   |    |    |     |     |      |
+| WARNING:root:And | this,   | too    |    |    |     |     |      |
+
 ** Cyclos
 
 https://demo.cyclos.org/api
@@ -554,3 +690,27 @@ Démarrage d'une session
 #+RESULTS:
 : # Out[12]:
 : : (401, {'code': 'login'})
+* Test serveur
+** To deploy
+
+#+begin_src ipython :session api :file  :exports both :tangle to_deploy.py
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/hello.json')
+def hello_world():
+    return {'msg': 'Hello, World!'}
+if __name__ == "__main__":
+    app.run(host='0.0.0.0')
+#+end_src
+
+#+begin_src ipython :session api :file  :exports both
+import requests
+url ='https://florain.guigeek.org/hello.json'
+r = requests.get(url)
+r.status_code
+#+end_src
+
+#+RESULTS:
+: # Out[9]:
+: : 503
